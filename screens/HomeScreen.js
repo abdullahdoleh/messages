@@ -24,7 +24,7 @@ export default function HomeScreen() {
   const [id, setId] = React.useState("");
 
   useEffect(() => {
-    db.collection("messages").onSnapshot(querySnapshot => {
+    db.collection("  messages").onSnapshot(querySnapshot => {
       const messages = [];
       querySnapshot.forEach(doc => {
         messages.push({ id: doc.id, ...doc.data() });
