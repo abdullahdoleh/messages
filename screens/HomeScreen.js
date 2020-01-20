@@ -16,10 +16,12 @@ import "@firebase/firestore";
 
 import db from "../db.js";
 
+import firebase from "firebase/app";
+import "firebase/auth";
+
 export default function HomeScreen() {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
-  const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [id, setId] = React.useState("");
 
@@ -42,7 +44,7 @@ export default function HomeScreen() {
 
   const handleSend = () => {
     // it checks that if the id messege is there that means that its being update
-
+    const from = firebase.auth().currentUser.uid;
     if (id) {
       db.collection("messages")
 
@@ -61,8 +63,6 @@ export default function HomeScreen() {
 
     //creating from scratch
 
-    setFrom("");
-
     setTo("");
 
     setText("");
@@ -71,7 +71,6 @@ export default function HomeScreen() {
   };
 
   const handleEdit = messages => {
-    setFrom(messages.from);
     setTo(messages.to);
     setText(messages.text);
     setId(messages.id);
@@ -87,7 +86,7 @@ export default function HomeScreen() {
         {messages.map((message, i) => (
           <View>
             <Text style={styles.getStartedText} key={i}>
-              {message.id} - {message.text}
+              {message.from} - {message.text}
             </Text>
 
             <View style={{ backgroundColor: "#e6f9ff" }}>
@@ -98,21 +97,6 @@ export default function HomeScreen() {
           </View>
         ))}
       </ScrollView>
-
-      <TextInput
-        style={{
-          height: 30,
-
-          borderColor: "black",
-
-          borderWidth: 1,
-
-          backgroundColor: "white"
-        }}
-        onChangeText={setFrom}
-        placeholder="From"
-        value={from}
-      />
 
       <TextInput
         style={{
