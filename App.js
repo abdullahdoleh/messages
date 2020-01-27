@@ -15,13 +15,14 @@ import { Ionicons } from "@expo/vector-icons";
 import AppNavigator from "./navigation/AppNavigator";
 import firebase from "firebase/app";
 import "firebase/auth";
+import db from "./db";
 export default function App(props) {
   const [isLoadingComplete, setLoadingComplete] = useState(false);
 
-  const [user, setUser] = useState(false);
-  const [email, setEmail] = useState(false);
-
-  const [password, setPassword] = useState(false);
+  const [user, setUser] = useState(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [displayname, setDisplayname] = useState("");
 
   useEffect(() => {
     return firebase.auth().onAuthStateChanged(setUser);
@@ -54,7 +55,7 @@ export default function App(props) {
               borderWidth: 1,
               backgroundColor: "white"
             }}
-            onChangeText={setEmail}
+            onChangeText={text => setEmail(text)}
             placeholder="Email"
             value={email}
           />
@@ -69,7 +70,7 @@ export default function App(props) {
 
               backgroundColor: "white"
             }}
-            onChangeText={setPassword}
+            onChangeText={text => setPassword(text)}
             placeholder="Password"
             securetextentry={true}
             value={password}

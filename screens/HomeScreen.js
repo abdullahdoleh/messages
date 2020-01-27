@@ -18,6 +18,7 @@ import db from "../db.js";
 
 import firebase from "firebase/app";
 import "firebase/auth";
+import Message from "../Message.js";
 
 export default function HomeScreen() {
   const [messages, setMessages] = useState([]);
@@ -26,32 +27,23 @@ export default function HomeScreen() {
   const [id, setId] = React.useState("");
 
   useEffect(() => {
-    db.collection("  messages").onSnapshot(querySnapshot => {
+    db.collection("messages").onSnapshot(querySnapshot => {
       const messages = [];
       querySnapshot.forEach(doc => {
         messages.push({ id: doc.id, ...doc.data() });
       });
-      console.log("Current Messages: ", messages.join(", "));
+      console.log("Current Messages: ", messages);
       setMessages([...messages]);
     });
   }, []);
 
-  const handleDelete = messages => {
-    db.collection("messages")
-      .doc(messages.id)
-      .delete();
-  };
-
   const handleSend = () => {
     // it checks that if the id messege is there that means that its being update
-    const from = firebase.auth().currentUser.uid;
+    const from = firebase.auth().currentUser.id;
     if (id) {
       db.collection("messages")
-
         .doc(id)
-
         // it will be called after clicking on send
-
         .update({ from, to, text });
     } else {
       //otherwise its a new message and it will use add to create and send it
@@ -85,15 +77,7 @@ export default function HomeScreen() {
       >
         {messages.map((message, i) => (
           <View>
-            <Text style={styles.getStartedText} key={i}>
-              {message.from} - {message.text}
-            </Text>
-
-            <View style={{ backgroundColor: "#e6f9ff" }}>
-              <Button title="Edit" onPress={() => handleEdit(message)} />
-
-              <Button title="Delete" onPress={() => handleDelete(message)} />
-            </View>
+            <Message key={i} message={message} handleEdit={handleEdit} />
           </View>
         ))}
       </ScrollView>
