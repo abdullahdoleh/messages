@@ -3,27 +3,26 @@ import React, { useState, useEffect } from "react";
 import {
   Image,
   Platform,
-  ScrollView,
-  StyleSheet,
   TextInput,
   Button,
+  ScrollView,
+  StyleSheet,
   Text,
   TouchableOpacity,
   View
 } from "react-native";
 
-import "@firebase/firestore";
-
-import db from "../db.js";
-
+import { MonoText } from "../components/StyledText";
 import firebase from "firebase/app";
 import "firebase/auth";
+import db from "../db.js";
+
 import Message from "../Message.js";
 
 export default function HomeScreen() {
   const [messages, setMessages] = useState([]);
-  const [text, setText] = useState("");
-  const [to, setTo] = useState("");
+  const [to, setTo] = React.useState("");
+  const [text, setText] = React.useState("");
   const [id, setId] = React.useState("");
 
   useEffect(() => {
@@ -32,40 +31,33 @@ export default function HomeScreen() {
       querySnapshot.forEach(doc => {
         messages.push({ id: doc.id, ...doc.data() });
       });
-      console.log("Current Messages: ", messages);
+      console.log(" Current messages: ", messages);
       setMessages([...messages]);
     });
   }, []);
 
   const handleSend = () => {
-    // it checks that if the id messege is there that means that its being update
-    const from = firebase.auth().currentUser.id;
+    const from = firebase.auth().currentUser.uid;
     if (id) {
       db.collection("messages")
         .doc(id)
-        // it will be called after clicking on send
         .update({ from, to, text });
     } else {
-      //otherwise its a new message and it will use add to create and send it
-
       db.collection("messages").add({ from, to, text });
     }
-
-    //if the message is new it will empty the from and to and text so it wont be updating anymore
-
-    //creating from scratch
-
     setTo("");
-
     setText("");
-
     setId("");
   };
 
-  const handleEdit = messages => {
-    setTo(messages.to);
-    setText(messages.text);
-    setId(messages.id);
+  const handleEdit = message => {
+    setTo(message.to);
+    setText(message.text);
+    setId(message.id);
+  };
+
+  const handleLogout = () => {
+    firebase.auth().signOut();
   };
 
   return (
@@ -76,46 +68,23 @@ export default function HomeScreen() {
         keyboardShouldPersistTaps="always"
       >
         {messages.map((message, i) => (
-          <View>
-            <Message key={i} message={message} handleEdit={handleEdit} />
-          </View>
+          <Message key={i} messages={messages} handleEdit={handleEdit} />
         ))}
       </ScrollView>
-
       <TextInput
-        style={{
-          height: 30,
-
-          borderColor: "black",
-
-          borderWidth: 1,
-
-          backgroundColor: "white"
-        }}
+        style={{ height: 40, borderColor: "gray", borderWidth: 1 }}
         onChangeText={setTo}
         placeholder="To"
         value={to}
       />
-
       <TextInput
-        style={{
-          height: "10%",
-
-          borderColor: "black",
-
-          borderWidth: 1,
-
-          backgroundColor: "white"
-        }}
+        style={{ height: 40, borderColor: "gray", borderWidth: 1 }}
         onChangeText={setText}
         placeholder="Text"
         value={text}
-        multiline={true}
       />
-
-      <View style={{ backgroundColor: "#e6f9ff" }}>
-        <Button title="send" onPress={() => handleSend()} />
-      </View>
+      <Button title="Send" onPress={handleSend} />
+      <Button title="Logout" onPress={handleLogout} />
     </View>
   );
 }
@@ -202,7 +171,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4
   },
   getStartedText: {
-    fontSize: 17,
+    fontSize: 24,
     color: "rgba(96,100,109, 1)",
     lineHeight: 24,
     textAlign: "center"

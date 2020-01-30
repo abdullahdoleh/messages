@@ -1,81 +1,109 @@
 import React, { useState, useEffect } from "react";
-import { ExpoConfigView } from "@expo/samples";
-
-import {
-  Image,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  Button,
-  Text,
-  TouchableOpacity,
-  View
-} from "react-native";
-
+import { StyleSheet, View, Image, Text, TextInput, Button } from "react-native";
 import firebase from "firebase/app";
 import "firebase/auth";
 import db from "../db";
 import * as ImagePicker from "expo-image-picker";
+import "firebase/storage";
+import { setConfigurationAsync } from "expo/build/AR";
 
 export default function SettingsScreen() {
-  const [cameraRol, setCameraRol] = useState("");
+  const [cameraRol, setCameraRol] = useState(false);
   const [displayname, setDisplayname] = useState("");
-  const [photoURL, setphotoURL] = useState("");
+  const [uri, setUri] = useState("");
+
+  const [photoURL, setPhotoURL] = useState("");
 
   const askPermission = async () => {
-    const {
-      status
-    } = await Permissions.ImagePicker.requestCameraRollPermissionsAsync()(
-      Permissions.CAMERAROLL
-    );
+    const { status } = await ImagePicker.requestCameraRollPermissionsAsync();
     setCameraRol(status === "granted");
   };
-
-  const handleSec = async () => {
-    const info = await db
-      .collection("users")
-      .doc(firebase.auth(currentUser.uri).get(info.data()));
-  };
-
-  const handlepick = () => {};
-
   useEffect(() => {
-    //setDisplayname(firebase.auth().currentUser.displayName);
-    handleSec();
     askPermission();
   }, []);
 
-  const handleup = () => {
-    //firebase.auth().currentUser.updateProfile(displayname);
-    db.collectionI("users")
-      .doc(firebase.auth().currentUser.uri)
-      .add(displayname, photoURL);
-    handleSec();
+  const handleSet = async () => {
+    const snap = await db
+      .collection("users")
+      .doc(firebase.auth().currentUser.uid)
+      .get();
+    setDisplayName(snap.data().displayName);
+    setPhotoURL(snap.data().photoURL);
+  };
+
+  useEffect(() => {
+    handleSet();
+  }, []);
+
+  useEffect(() => {
+    // setDisplayName(firebase.auth().currentUser.displayName);
+    // setPhotoURL(firebase.auth().currentUser.photoURL);
+    handleSet();
+  }, []);
+
+  const handleSave = () => {
+    //firebase.auth().currentUser.updateProfile({ displayName, photoURL });
+    db.collection("users")
+      .doc(firebase.auth().currentUser.uid)
+      .set({ displayName, photoURL });
+    handleSet();
+  };
+
+  const handlePickImage = async () => {
+    // show camera roll, allow user to select, set photoURL
+    // - use firebase storage
+    // - upload selected image to default bucket, naming with uid
+    // - get url and set photoURL
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1
+    });
+    //if (!result.cancelled) {
+    //this.setState({ image: result.uri });
+    if (uri !== "") {
+      console.log("....", result.uri);
+      setUri(result.uri);
+
+      const firebase = await fetch(result.uri);
+      const blob = await response.blob();
+
+      firebase
+        .storage()
+        .ref()
+        .child(firebase.auth().currentUser.uid)
+        .put(blob);
+
+      const url = await firebase
+        .storage()
+        .ref()
+        .child(firebase.auth().currentUser.uid)
+        .getDownloadUrl();
+      console.log(" photo url ", url);
+      setPhotoURL(url);
+    }
   };
 
   return (
     <View style={styles.container}>
-      {photoURL != "" && (
-        <Image source={user.photoURL} style={{ width: 50, hight: 50 }} />
-      )}
-      ;
       <TextInput
         style={{
           height: 30,
-
           borderColor: "black",
-
           borderWidth: 1,
-
           backgroundColor: "white"
         }}
         onChangeText={setDisplayname}
         placeholder="displayname"
         value={displayname}
       />
-      <Button title="Edit" onPress={() => handleup()} />
-      <Button title="pick Image" onPress={handleup} />
+      {photoURL !== "" && (
+        <Image style={{ width: 100, height: 100 }} source={{ uri: photoURL }} />
+      )}
+      ;
+      <Button title="Pick Image" onPress={handlePickImage} />
+      <Button title="Save" onPress={handleSave} />
     </View>
   );
 }
